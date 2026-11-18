@@ -18,6 +18,10 @@ spend the 3,000 shared minutes that CI and the daily batch need.
 - Keep-alive: on the 1st of the month the workflow re-enables itself (a public schedule stops after 60 days without
   activity; that the API call resets the timer is NOT-CHECKED - if the schedule ever stops, push any commit).
 
+## Log
+- 18-11-2026: LIVE (PR #1, main 151d57d). Drill VERIFIED: issue #2 opened + closed, DOWN and UP mails and GitHub's
+  failed-run mail all reached tech@.
+
 ## Change it
 Add a target to `TARGETS` (public https only - a test refuses `scw.cloud`), `python test_watch.py`, release the
 repo (`release-all.py <tag> outside-watch`). Prove the alarm: Actions -> watch -> Run workflow -> drill.
