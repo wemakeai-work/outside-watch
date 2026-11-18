@@ -1,0 +1,53 @@
+name: watch
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # the watch
+    - cron: "7 3 1 * *"      # monthly keep-alive (a public repo's schedule is disabled after 60 days without activity)
+  workflow_dispatch:
+    inputs:
+      drill:
+        description: "Also check a target that is meant to fail (proves the alarm path)"
+        type: boolean
+        default: false
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  issues: write
+  actions: write
+
+concurrency:
+  group: watch
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 test_watch.py
+
+  watch:
+    needs: test
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: keep the schedule alive
+        if: github.event.schedule == '7 3 1 * *'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/watch.yml/enable"
+      - name: watch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SCW_TEM_KEY: ${{ secrets.SCW_TEM_KEY }}
+          SCW_PROJECT_ID: ${{ secrets.SCW_PROJECT_ID }}
+          ALARM_TO: ${{ secrets.ALARM_TO }}
+          ALARM_FROM: ${{ secrets.ALARM_FROM }}
+        run: python3 watch.py ${{ inputs.drill && '--drill' || '' }}
